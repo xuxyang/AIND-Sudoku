@@ -8,7 +8,10 @@ square_units = [cross(rs, cs) for rs in ('ABC','DEF','GHI') for cs in ('123','45
 unitlist = row_units + column_units + square_units
 
 # TODO: Update the unit list to add the new diagonal units
-unitlist = unitlist
+diagonal_units_1 = [rows[i]+cols[i] for i in range(9)]
+diagonal_units_2 = [rows[8-i]+cols[i] for i in range(9)]
+diagonal_units = [diagonal_units_1] + [diagonal_units_2]
+unitlist = unitlist + diagonal_units
 
 units = dict((s, [u for u in unitlist if s in u]) for s in boxes)
 peers = dict((s, set(sum(units[s],[]))-set([s])) for s in boxes)
@@ -42,7 +45,17 @@ def naked_twins(values):
     strategy repeatedly).
     """
     # TODO: Implement this function!
-    raise NotImplementedError
+    for unit in unitlist:
+        unit_peers = dict((s, set(unit)-set([s])) for s in unit)
+        nakedTwinsList = []
+        for box in unit:
+            if values[box] not in nakedTwinsList and len(values[box]) == 2 and any(values[p] == values[box] for p in unit_peers[box]):
+                nakedTwinsList.append(values[box])
+        for nakedTwins in nakedTwinsList:
+            for box in unit:
+                values[box] = ''.join(sorted(set(values[box]) - set(nakedTwins))) if values[box] != nakedTwins else values[box]
+    return values
+
 
 
 def eliminate(values):
@@ -128,6 +141,8 @@ def reduce_puzzle(values):
         # Your code here: Use the Only Choice Strategy
         values = only_choice(values)
 
+        values = naked_twins(values)
+
         # Check how many boxes have a determined value, to compare
         solved_values_after = len([box for box in values.keys() if len(values[box]) == 1])
         # If no new values were added, stop the loop.
@@ -136,7 +151,7 @@ def reduce_puzzle(values):
         if len([box for box in values.keys() if len(values[box]) == 0]):
             return False
     return values
-    
+
 
 def search(values):
     """Apply depth first search to solve Sudoku puzzles in order to solve puzzles
@@ -202,6 +217,7 @@ def solve(grid):
 
 if __name__ == "__main__":
     diag_sudoku_grid = '2.............62....1....7...6..8...3...9...7...6..4...4....8....52.............3'
+    #diag_sudoku_grid = '1.4.9..68956.18.34..84.695151.....868..6...1264..8..97781923645495.6.823.6.854179'
     display(grid2values(diag_sudoku_grid))
     result = solve(diag_sudoku_grid)
     display(result)
